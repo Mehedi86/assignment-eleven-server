@@ -30,9 +30,23 @@ async function run() {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+        // books related collection
+        const booksCollection = client.db('edulab').collection('allBooks');
+
+        // apis
+        app.get('/books', async (req, res) => {
+            const cursor = booksCollection.find();
+            const result = await cursor.toArray() ;
+            res.send(result)
+        })
+
+
+
+
     } finally {
         // Ensures that the client will close when you finish/error
-        await client.close();
+        // await client.close();
     }
 }
 run().catch(console.dir);
