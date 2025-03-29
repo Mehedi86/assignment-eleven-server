@@ -33,6 +33,7 @@ async function run() {
 
         // books related collection
         const booksCollection = client.db('edulab').collection('allBooks');
+        const borrowCollection = client.db('edulab').collection('borrows');
 
         // apis
         // For get All Books api
@@ -80,6 +81,20 @@ async function run() {
             }
             const result = await booksCollection.updateOne(filter, book, option);
             res.send(result)
+        })
+
+        // add borrow information api
+        app.post('/borrowBooks', async (req, res) => {
+            const borrow = req.body;
+            const result = await borrowCollection.insertOne(borrow);
+            res.send(result)
+        })
+
+        app.get('/myBorrowedBooks', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const result = await borrowCollection.find(query).toArray();
+            res.send(result);
         })
 
     } finally {
