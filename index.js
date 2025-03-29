@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 const port = process.env.PORT || 5000;
@@ -35,20 +35,52 @@ async function run() {
         const booksCollection = client.db('edulab').collection('allBooks');
 
         // apis
+        // For get All Books api
         app.get('/books', async (req, res) => {
             const cursor = booksCollection.find();
-            const result = await cursor.toArray() ;
+            const result = await cursor.toArray();
             res.send(result)
         })
 
-        app.post('/books', async (req, res) =>{
+        // add book api
+        app.post('/books', async (req, res) => {
             const book = req.body;
             const result = await booksCollection.insertOne(book);
             res.send(result)
         })
 
+        // find single book by its id api
+        app.get('/books/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await booksCollection.findOne(query);
+            res.send(result)
+        })
 
+        // update book api
+        app.put('/updateBook/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedBook = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const option = { upsert: true }
+            const book = {
 
+                // author, category, content, description, image, name, quantity, rating, subcategory
+                $set: {
+                    author: updatedBook.author,
+                    category: updatedBook.category,
+                    content: updatedBook.content,
+                    description: updatedBook.description,
+                    image: updatedBook.image,
+                    name: updatedBook.name,
+                    quantity: updatedBook.quantity,
+                    rating: updatedBook.rating,
+                    subcategory: updatedBook.subcategory
+                }
+            }
+            const result = await booksCollection.updateOne(filter, book, option);
+            res.send(result)
+        })
 
     } finally {
         // Ensures that the client will close when you finish/error
