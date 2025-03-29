@@ -41,6 +41,12 @@ async function run() {
             res.send(result)
         })
 
+        app.post('/books', async (req, res) =>{
+            const book = req.body;
+            const result = await booksCollection.insertOne(book);
+            res.send(result)
+        })
+
 
 
 
