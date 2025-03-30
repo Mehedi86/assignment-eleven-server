@@ -119,10 +119,27 @@ async function run() {
 
         app.delete('/myBorrowedBook/:id', async (req, res) => {
             const id = req.params.id;
+
+            // find the book which quantity need to update
+            const borrowQuery = { _id: new ObjectId(id) };
+            const borrowData = await borrowCollection.findOne(borrowQuery);
+
+
+            // now update the quantity of the book
+            const updateQuery = { _id: new ObjectId(borrowData.bookId) };
+            const updateQuantity = {
+                $inc: {
+                    quantity: 1
+                }
+            }
+            const updateResult = await booksCollection.updateOne(updateQuery, updateQuantity)
+
+            // delete operation
             const query = { _id: new ObjectId(id) };
             const result = await borrowCollection.deleteOne(query);
             res.send(result)
         })
+
 
     } finally {
         // Ensures that the client will close when you finish/error
