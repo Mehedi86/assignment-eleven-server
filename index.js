@@ -86,8 +86,28 @@ async function run() {
         // add borrow information api
         app.post('/borrowBooks', async (req, res) => {
             const borrow = req.body;
+            const bookId = borrow.bookId;
+
+            // find the specific book for update quantity
+            const bookQuery = { _id: new ObjectId(bookId) };
+            const book = await booksCollection.findOne(bookQuery);
+
+
+            if (!book || book.quantity <= 0) {
+                return res.status(400).send({ message: 'Book is out of stock!' })
+            }
+
             const result = await borrowCollection.insertOne(borrow);
-            res.send(result)
+
+            const updateQuery = { _id: new ObjectId(bookId) };
+            const updateQuantity = {
+                $inc: {
+                    quantity: -1
+                }
+            }
+
+            const updateResult = await booksCollection.updateOne(updateQuery, updateQuantity)
+            res.send(updateResult)
         })
 
         app.get('/myBorrowedBooks', async (req, res) => {
