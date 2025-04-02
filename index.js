@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser');
 const app = express();
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -16,6 +17,21 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
+
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token;
+    if (!token) {
+        return res.status(401).send({ message: "unauthorized access" });
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: "unauthorized access" })
+        }
+        req.user = decoded;
+        next();
+    })
+}
 
 
 
@@ -46,10 +62,17 @@ async function run() {
 
         // auth related api (jwt)
 
-        app.post('/jwt', async (req, res) => {
+        app.post('/jwtLogin', async (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             res.cookie('token', token, {
+                httpOnly: true,
+                secure: false
+            }).send({ success: true })
+        })
+
+        app.post('/jwtLogout', (req, res) => {
+            res.clearCookie('token', {
                 httpOnly: true,
                 secure: false
             }).send({ success: true })
@@ -130,9 +153,10 @@ async function run() {
             res.send(updateResult)
         })
 
-        app.get('/myBorrowedBooks', async (req, res) => {
+        app.get('/myBorrowedBooks', verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = { email: email }
+
             const result = await borrowCollection.find(query).toArray();
             res.send(result);
         })
@@ -142,6 +166,7 @@ async function run() {
 
             // find the book which quantity need to update
             const borrowQuery = { _id: new ObjectId(id) };
+
             const borrowData = await borrowCollection.findOne(borrowQuery);
 
 
