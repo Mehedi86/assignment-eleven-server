@@ -80,14 +80,14 @@ async function run() {
 
 
         // For get All Books api
-        app.get('/books', async (req, res) => {
+        app.get('/books', verifyToken, async (req, res) => {
             const cursor = booksCollection.find();
             const result = await cursor.toArray();
             res.send(result)
         })
 
         // add book api
-        app.post('/books', async (req, res) => {
+        app.post('/books', verifyToken, async (req, res) => {
             const book = req.body;
             const result = await booksCollection.insertOne(book);
             res.send(result)
@@ -102,7 +102,7 @@ async function run() {
         })
 
         // update book api
-        app.put('/updateBook/:id', async (req, res) => {
+        app.put('/updateBook/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const updatedBook = req.body;
             const filter = { _id: new ObjectId(id) };
@@ -127,7 +127,7 @@ async function run() {
         })
 
         // add borrow information api
-        app.post('/borrowBooks', async (req, res) => {
+        app.post('/borrowBooks', verifyToken, async (req, res) => {
             const borrow = req.body;
             const bookId = borrow.bookId;
 
@@ -156,6 +156,10 @@ async function run() {
         app.get('/myBorrowedBooks', verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = { email: email }
+
+            if (req.user.email !== req.query.email) {
+                return res.status(403).send({ message: "forbidden access" })
+            }
 
             const result = await borrowCollection.find(query).toArray();
             res.send(result);
