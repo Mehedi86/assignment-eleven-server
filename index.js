@@ -12,9 +12,9 @@ const port = process.env.PORT || 5000;
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://rainbow-gingersnap-782800.netlify.app'
+        'https://silly-cobbler-5517a0.netlify.app'
     ],
-    credentials: true
+    credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -67,14 +67,16 @@ async function run() {
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: false
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none"
             }).send({ success: true })
         })
 
         app.post('/jwtLogout', (req, res) => {
             res.clearCookie('token', {
                 httpOnly: true,
-                secure: false
+                secure: process.env.NODE_ENV === "production",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
             }).send({ success: true })
         })
 
